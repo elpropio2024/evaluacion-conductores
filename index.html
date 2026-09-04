@@ -254,18 +254,15 @@ async function guardarResultado(){
   const statusEl = document.getElementById('saveStatus');
   if(statusEl) statusEl.textContent = 'Guardando...';
   try{
-    const resp = await fetch(AIRTABLE_WEBHOOK_URL, {
+    await fetch(AIRTABLE_WEBHOOK_URL, {
       method: "POST",
-      headers: {"Content-Type": "application/json"},
+      mode: "no-cors",
+      headers: {"Content-Type": "text/plain"},
       body: JSON.stringify(lastPayload)
     });
-    if(resp.ok){
-      if(statusEl) statusEl.textContent = 'Resultado guardado correctamente.';
-    } else {
-      if(statusEl) statusEl.textContent = 'No se pudo guardar (intenta de nuevo).';
-    }
+    if(statusEl) statusEl.textContent = 'Resultado enviado al sistema.';
   }catch(e){
-    if(statusEl) statusEl.textContent = 'No se pudo guardar (revisa tu conexión e intenta de nuevo).';
+    if(statusEl) statusEl.textContent = 'No se pudo enviar (revisa tu conexión e intenta de nuevo).';
   }
 }
 
