@@ -97,8 +97,9 @@
     </div>
     <div class="recbox" id="recBox"></div>
     <div class="btn-row">
-      <button class="btn-primary" style="width:100%" onclick="openAirtableForm()">Guardar resultado en el sistema</button>
+      <button class="btn-primary" style="width:100%" onclick="guardarResultado()">Reintentar guardado</button>
     </div>
+    <p id="saveStatus" style="text-align:center;color:var(--gray);font-size:.85rem;margin-top:-6px;">Guardando...</p>
     <div class="btn-row">
       <button class="btn-secondary" style="width:100%" onclick="window.print()">Imprimir / Guardar resultado</button>
     </div>
@@ -226,37 +227,49 @@ function finishQuiz(){
   QUESTIONS.forEach((q,i)=>{
     if(answers[i]!==q.correct){ malasList.push((i+1)+'. '+q.q+' -> Correcta: '+q.opts[q.correct]); }
   });
-  airtableUrlCache = buildAirtableFormUrl(malasList);
-  window.open(airtableUrlCache, "_blank");
-}
-
-
-const AIRTABLE_FORM_URL = "https://airtable.com/app8Ym2jJ2T0F3TGp/shr6V8oNnypWMTvEF";
-
-function buildAirtableFormUrl(malas){
-  const params = new URLSearchParams();
-  const fields = {
-    "Nombre": driverInfo.nombre,
-    "Cedula": driverInfo.cedula,
-    "Correo": driverInfo.correo,
-    "Fecha": driverInfo.fecha || "",
-    "Puntaje": String(finalScore),
-    "Porcentaje": String(finalPct),
-    "Recomendacion": finalRec,
-    "PreguntasMalas": malas.join(" | ").slice(0, 800) || "Ninguna"
-  };
-  Object.keys(fields).forEach(k=>{
-    params.set("prefill_"+k, fields[k]);
-    params.set("hide_"+k, "true");
+  let buenasList = [];
+  QUESTIONS.forEach((q,i)=>{
+    if(answers[i]===q.correct){ buenasList.push((i+1)); }
   });
-  return AIRTABLE_FORM_URL + "?" + params.toString();
+
+  lastPayload = {
+    nombre: driverInfo.nombre,
+    cedula: driverInfo.cedula,
+    correo: driverInfo.correo,
+    fecha: driverInfo.fecha || "",
+    puntaje: finalScore,
+    porcentaje: finalPct,
+    recomendacion: finalRec,
+    buenas: buenasList.join(", "),
+    malas: malasList.join(" | ").slice(0, 900) || "Ninguna",
+    registrado: new Date().toISOString()
+  };
+
+  guardarResultado();
 }
 
-let airtableUrlCache = "";
 
-function openAirtableForm(){
-  if(airtableUrlCache){
-    window.open(airtableUrlCache, "_blank");
+const AIRTABLE_WEBHOOK_URL = "https://hooks.airtable.com/workflows/v1/genericWebhook/app8Ym2jJ2T0F3TGp/wflks4l9DP6k9kF2A/wtrvbPHABSPyRWWnl";
+
+let lastPayload = null;
+
+async function guardarResultado(){
+  if(!lastPayload) return;
+  const statusEl = document.getElementById('saveStatus');
+  if(statusEl) statusEl.textContent = 'Guardando...';
+  try{
+    const resp = await fetch(AIRTABLE_WEBHOOK_URL, {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify(lastPayload)
+    });
+    if(resp.ok){
+      if(statusEl) statusEl.textContent = 'Resultado guardado correctamente.';
+    } else {
+      if(statusEl) statusEl.textContent = 'No se pudo guardar (intenta de nuevo).';
+    }
+  }catch(e){
+    if(statusEl) statusEl.textContent = 'No se pudo guardar (revisa tu conexión e intenta de nuevo).';
   }
 }
 
