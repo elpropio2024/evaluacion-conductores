@@ -94,15 +94,13 @@
     </div>
     <div class="recbox" id="recBox"></div>
     <div class="btn-row">
-      <button class="btn-primary" style="width:100%" onclick="guardarResultado()">Reintentar guardado</button>
+      <button class="btn-primary" style="width:100%" onclick="guardarResultado()">Guardar resultado (abre pestaña nueva)</button>
     </div>
-    <p id="saveStatus" style="text-align:center;color:var(--gray);font-size:.85rem;margin-top:-6px;">Guardando...</p>
+    <p style="text-align:center;color:var(--gray);font-size:.85rem;">Se abrió una pestaña con tu resultado listo — solo dale clic a "Submit" ahí para guardarlo.</p>
     <div class="btn-row">
       <button class="btn-secondary" style="width:100%" onclick="window.print()">Imprimir / Guardar resultado</button>
     </div>
   </div>
-
-  <div class="card" id="reviewArea" style="display:none"></div>
 
   <footer>Material de capacitación interna — CCSI · Basado en el manual del fabricante Huanghai DD6960B01NE.</footer>
 </div>
@@ -206,63 +204,36 @@ function finishQuiz(){
   document.getElementById('recBox').innerHTML = '<strong>Recomendación:</strong> '+finalRec;
   document.getElementById('resultArea').style.display='block';
 
-  const reviewArea = document.getElementById('reviewArea');
-  reviewArea.style.display='block';
-  let html = '<h3 style="margin-top:0">Revisión detallada</h3>';
-  QUESTIONS.forEach((q,i)=>{
-    const correct = answers[i]===q.correct;
-    html += '<div class="rev-item">';
-    html += '<span class="tag '+(correct?'ok':'bad')+'">'+(correct?'CORRECTA':'INCORRECTA')+'</span>';
-    html += '<div class="rev-q">'+(i+1)+'. '+q.q+'</div>';
-    html += '<div class="rev-ans">Respuesta del conductor: '+ (answers[i]!==null? q.opts[answers[i]] : '(sin responder)') +'</div>';
-    html += '</div>';
-  });
-  reviewArea.innerHTML = html;
-
-  let malasList = [];
-  QUESTIONS.forEach((q,i)=>{
-    if(answers[i]!==q.correct){ malasList.push((i+1)+'. '+q.q+' -> Correcta: '+q.opts[q.correct]); }
-  });
-  let buenasList = [];
-  QUESTIONS.forEach((q,i)=>{
-    if(answers[i]===q.correct){ buenasList.push((i+1)); }
-  });
-
-  lastPayload = {
-    nombre: driverInfo.nombre,
-    cedula: driverInfo.cedula,
-    correo: driverInfo.correo,
-    fecha: driverInfo.fecha || "",
-    puntaje: finalScore,
-    porcentaje: finalPct,
-    recomendacion: finalRec,
-    buenas: buenasList.join(", "),
-    malas: malasList.join(" | ").slice(0, 900) || "Ninguna",
-    registrado: new Date().toISOString()
-  };
-
-  guardarResultado();
+  airtableUrlCache = buildAirtableFormUrl();
+  window.open(airtableUrlCache, "_blank");
 }
 
 
-const AIRTABLE_WEBHOOK_URL = "https://hooks.airtable.com/workflows/v1/genericWebhook/app8Ym2jJ2T0F3TGp/wflks4l9DP6k9kF2A/wtrvbPHABSPyRWWnl";
+const AIRTABLE_FORM_URL = "https://airtable.com/app8Ym2jJ2T0F3TGp/shr6V8oNnypWMTvEF";
 
-let lastPayload = null;
+let airtableUrlCache = "";
 
-async function guardarResultado(){
-  if(!lastPayload) return;
-  const statusEl = document.getElementById('saveStatus');
-  if(statusEl) statusEl.textContent = 'Guardando...';
-  try{
-    await fetch(AIRTABLE_WEBHOOK_URL, {
-      method: "POST",
-      mode: "no-cors",
-      headers: {"Content-Type": "text/plain"},
-      body: JSON.stringify(lastPayload)
-    });
-    if(statusEl) statusEl.textContent = 'Resultado enviado al sistema.';
-  }catch(e){
-    if(statusEl) statusEl.textContent = 'No se pudo enviar (revisa tu conexión e intenta de nuevo).';
+function buildAirtableFormUrl(){
+  const params = new URLSearchParams();
+  const fields = {
+    "Nombre": driverInfo.nombre,
+    "Cedula": driverInfo.cedula,
+    "Correo": driverInfo.correo,
+    "Fecha": driverInfo.fecha || "",
+    "Puntaje": String(finalScore),
+    "Porcentaje": String(finalPct),
+    "Recomendacion": finalRec
+  };
+  Object.keys(fields).forEach(k=>{
+    params.set("prefill_"+k, fields[k]);
+    params.set("hide_"+k, "true");
+  });
+  return AIRTABLE_FORM_URL + "?" + params.toString();
+}
+
+function guardarResultado(){
+  if(airtableUrlCache){
+    window.open(airtableUrlCache, "_blank");
   }
 }
 
