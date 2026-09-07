@@ -213,7 +213,7 @@ function finishQuiz(){
     }
   }
   
-  dataToSend = {
+  dataToDownload = {
     Nombre: driverInfo.nombre,
     Cedula: driverInfo.cedula,
     Correo: driverInfo.correo,
@@ -231,37 +231,62 @@ function finishQuiz(){
 }
 
 
-const FORMSPREE_URL = "https://formspree.io/f/xkjnqpkz";
+let dataToDownload = null;
 
-let dataToSend = null;
-
-async function guardarResultado(){
-  if(!dataToSend) return;
+function descargarCSV(){
+  if(!dataToDownload) return;
   
-  const statusEl = document.getElementById('saveStatus');
-  if(statusEl) statusEl.textContent = 'Guardando...';
+  // Construir CSV
+  const encabezados = [
+    "Nombre", "Cedula", "Correo", "Fecha", "Hora", 
+    "Puntaje", "Porcentaje", "Preguntas_Buenas", "Preguntas_Malas", "Recomendacion",
+    "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10",
+    "P11", "P12", "P13", "P14", "P15", "P16", "P17", "P18", "P19", "P20"
+  ];
   
-  try {
-    const response = await fetch(FORMSPREE_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(dataToSend)
-    });
-    
-    if(response.ok) {
-      if(statusEl) statusEl.textContent = '✅ Guardado correctamente en el sistema';
-      if(statusEl) statusEl.style.color = '#22c55e';
-    } else {
-      if(statusEl) statusEl.textContent = '❌ Error al guardar (intenta de nuevo)';
-      if(statusEl) statusEl.style.color = '#ef4444';
-    }
-  } catch(error) {
-    if(statusEl) statusEl.textContent = '❌ No se pudo guardar (revisa tu conexión)';
-    if(statusEl) statusEl.style.color = '#ef4444';
-    console.error('Error:', error);
+  const fila = [
+    dataToDownload.Nombre,
+    dataToDownload.Cedula,
+    dataToDownload.Correo,
+    dataToDownload.Fecha,
+    dataToDownload.Hora,
+    dataToDownload.Puntaje,
+    dataToDownload.Porcentaje,
+    dataToDownload.Preguntas_Buenas,
+    dataToDownload.Preguntas_Malas,
+    dataToDownload.Recomendacion
+  ];
+  
+  // Agregar P1-P20
+  for(let i = 1; i <= 20; i++){
+    fila.push(dataToDownload["P"+i] || "");
   }
+  
+  // Crear CSV
+  let csv = encabezados.join(",") + "\n";
+  csv += fila.map(v => {
+    // Escapar comillas y envolver en comillas si contiene comas
+    const val = String(v).replace(/"/g, '""');
+    return val.includes(",") ? '"' + val + '"' : val;
+  }).join(",");
+  
+  // Descargar
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement("a");
+  const url = URL.createObjectURL(blob);
+  link.setAttribute("href", url);
+  link.setAttribute("download", "Evaluacion_Conductores_" + dataToDownload.Cedula + ".csv");
+  link.style.visibility = 'hidden';
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function guardarResultado(){
+  descargarCSV();
+  const statusEl = document.getElementById('saveStatus');
+  if(statusEl) statusEl.textContent = '✅ Archivo descargado: Evaluacion_Conductores_' + dataToDownload.Cedula + '.csv';
+  if(statusEl) statusEl.style.color = '#22c55e';
 }
 
 </script>
