@@ -94,9 +94,15 @@
     </div>
     <div class="recbox" id="recBox"></div>
     <div class="btn-row">
-      <button class="btn-primary" style="width:100%" onclick="guardarResultado()">Guardar resultado en el sistema</button>
+      <button class="btn-primary" style="width:100%" onclick="descargarCSV()">Descargar resultado como CSV</button>
     </div>
-    <p id="saveStatus" style="text-align:center;color:var(--gray);font-size:.85rem;margin-top:8px;">Guardando...</p>
+    <p style="text-align:center;color:var(--gray);font-size:.85rem;margin-top:8px;">Haz clic para descargar o copia el texto de abajo</p>
+    
+    <div style="background:#f5f5f5;padding:12px;border-radius:6px;margin-top:16px;">
+      <p style="color:var(--gray);font-size:.8rem;margin:0 0 8px 0;">📋 Tus datos (copiar en el Google Sheet):</p>
+      <textarea id="csvData" readonly style="width:100%;height:120px;font-size:.8rem;font-family:monospace;padding:8px;border:1px solid #ddd;border-radius:4px;"></textarea>
+      <button onclick="copiarAlPortapapeles()" style="margin-top:8px;padding:8px 16px;background:#0066cc;color:white;border:none;border-radius:4px;cursor:pointer;font-size:.85rem;">Copiar al portapapeles</button>
+    </div>
     <div class="btn-row">
       <button class="btn-secondary" style="width:100%" onclick="window.print()">Imprimir / Guardar resultado</button>
     </div>
@@ -213,7 +219,7 @@ function finishQuiz(){
     }
   }
   
-  dataToDownload = {
+  datosExamen = {
     Nombre: driverInfo.nombre,
     Cedula: driverInfo.cedula,
     Correo: driverInfo.correo,
@@ -227,16 +233,30 @@ function finishQuiz(){
     ...respuestasDetalle
   };
   
-  guardarResultado();
+  // Mostrar datos en textarea
+  const encabezados = ["Nombre", "Cedula", "Correo", "Fecha", "Hora", "Puntaje", "Porcentaje", "Preguntas_Buenas", "Preguntas_Malas", "Recomendacion"];
+  for(let i = 1; i <= 20; i++) encabezados.push("P"+i);
+  
+  const fila = [
+    datosExamen.Nombre, datosExamen.Cedula, datosExamen.Correo, datosExamen.Fecha, datosExamen.Hora,
+    datosExamen.Puntaje, datosExamen.Porcentaje, datosExamen.Preguntas_Buenas, datosExamen.Preguntas_Malas, datosExamen.Recomendacion
+  ];
+  for(let i = 1; i <= 20; i++) fila.push(datosExamen["P"+i] || "");
+  
+  let csv = encabezados.join(",") + "\n" + fila.map(v => {
+    const val = String(v).replace(/"/g, '""');
+    return val.includes(",") ? '"' + val + '"' : val;
+  }).join(",");
+  
+  document.getElementById('csvData').value = csv;
 }
 
 
-let dataToDownload = null;
+let datosExamen = null;
 
 function descargarCSV(){
-  if(!dataToDownload) return;
+  if(!datosExamen) return;
   
-  // Construir CSV
   const encabezados = [
     "Nombre", "Cedula", "Correo", "Fecha", "Hora", 
     "Puntaje", "Porcentaje", "Preguntas_Buenas", "Preguntas_Malas", "Recomendacion",
@@ -245,48 +265,40 @@ function descargarCSV(){
   ];
   
   const fila = [
-    dataToDownload.Nombre,
-    dataToDownload.Cedula,
-    dataToDownload.Correo,
-    dataToDownload.Fecha,
-    dataToDownload.Hora,
-    dataToDownload.Puntaje,
-    dataToDownload.Porcentaje,
-    dataToDownload.Preguntas_Buenas,
-    dataToDownload.Preguntas_Malas,
-    dataToDownload.Recomendacion
+    datosExamen.Nombre,
+    datosExamen.Cedula,
+    datosExamen.Correo,
+    datosExamen.Fecha,
+    datosExamen.Hora,
+    datosExamen.Puntaje,
+    datosExamen.Porcentaje,
+    datosExamen.Preguntas_Buenas,
+    datosExamen.Preguntas_Malas,
+    datosExamen.Recomendacion
   ];
   
-  // Agregar P1-P20
   for(let i = 1; i <= 20; i++){
-    fila.push(dataToDownload["P"+i] || "");
+    fila.push(datosExamen["P"+i] || "");
   }
   
-  // Crear CSV
   let csv = encabezados.join(",") + "\n";
   csv += fila.map(v => {
-    // Escapar comillas y envolver en comillas si contiene comas
     const val = String(v).replace(/"/g, '""');
     return val.includes(",") ? '"' + val + '"' : val;
   }).join(",");
   
-  // Descargar
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
   const link = document.createElement("a");
-  const url = URL.createObjectURL(blob);
-  link.setAttribute("href", url);
-  link.setAttribute("download", "Evaluacion_Conductores_" + dataToDownload.Cedula + ".csv");
-  link.style.visibility = 'hidden';
-  document.body.appendChild(link);
+  link.href = URL.createObjectURL(blob);
+  link.download = "Evaluacion_" + datosExamen.Cedula + ".csv";
   link.click();
-  document.body.removeChild(link);
 }
 
-function guardarResultado(){
-  descargarCSV();
-  const statusEl = document.getElementById('saveStatus');
-  if(statusEl) statusEl.textContent = '✅ Archivo descargado: Evaluacion_Conductores_' + dataToDownload.Cedula + '.csv';
-  if(statusEl) statusEl.style.color = '#22c55e';
+function copiarAlPortapapeles(){
+  const textarea = document.getElementById('csvData');
+  textarea.select();
+  document.execCommand('copy');
+  alert('✅ Copiado al portapapeles');
 }
 
 </script>
