@@ -94,9 +94,9 @@
     </div>
     <div class="recbox" id="recBox"></div>
     <div class="btn-row">
-      <button class="btn-primary" style="width:100%" onclick="guardarResultado()">Guardar resultado (abre pestaña nueva)</button>
+      <button class="btn-primary" style="width:100%" onclick="guardarResultado()">Guardar resultado en el sistema</button>
     </div>
-    <p style="text-align:center;color:var(--gray);font-size:.85rem;">Se abrió una pestaña con tu resultado listo — solo dale clic a "Submit" ahí para guardarlo.</p>
+    <p id="saveStatus" style="text-align:center;color:var(--gray);font-size:.85rem;margin-top:8px;">Guardando...</p>
     <div class="btn-row">
       <button class="btn-secondary" style="width:100%" onclick="window.print()">Imprimir / Guardar resultado</button>
     </div>
@@ -204,36 +204,63 @@ function finishQuiz(){
   document.getElementById('recBox').innerHTML = '<strong>Recomendación:</strong> '+finalRec;
   document.getElementById('resultArea').style.display='block';
 
-  airtableUrlCache = buildAirtableFormUrl();
-  window.open(airtableUrlCache, "_blank");
-}
-
-
-const AIRTABLE_FORM_URL = "https://airtable.com/app8Ym2jJ2T0F3TGp/shr6V8oNnypWMTvEF";
-
-let airtableUrlCache = "";
-
-function buildAirtableFormUrl(){
-  const params = new URLSearchParams();
-  const fields = {
-    "Nombre": driverInfo.nombre,
-    "Cedula": driverInfo.cedula,
-    "Correo": driverInfo.correo,
-    "Fecha": driverInfo.fecha || "",
-    "Puntaje": String(finalScore),
-    "Porcentaje": String(finalPct),
-    "Recomendacion": finalRec
+  // Construir objeto de datos para Formspree
+  const respuestasDetalle = {};
+  for (let i = 1; i <= 20; i++) {
+    const respuesta = answers[i-1];
+    if (respuesta !== null) {
+      respuestasDetalle["P" + i] = QUESTIONS[i-1].opts[respuesta];
+    }
+  }
+  
+  dataToSend = {
+    Nombre: driverInfo.nombre,
+    Cedula: driverInfo.cedula,
+    Correo: driverInfo.correo,
+    Fecha: driverInfo.fecha || "",
+    Hora: new Date().toLocaleTimeString(),
+    Puntaje: finalScore + "/20",
+    Porcentaje: finalPct + "%",
+    Preguntas_Buenas: buenasList.join(", "),
+    Preguntas_Malas: malasList.join(", "),
+    Recomendacion: finalRec,
+    ...respuestasDetalle
   };
-  Object.keys(fields).forEach(k=>{
-    params.set("prefill_"+k, fields[k]);
-    params.set("hide_"+k, "true");
-  });
-  return AIRTABLE_FORM_URL + "?" + params.toString();
+  
+  guardarResultado();
 }
 
-function guardarResultado(){
-  if(airtableUrlCache){
-    window.open(airtableUrlCache, "_blank");
+
+const FORMSPREE_URL = "https://formspree.io/f/xkjnqpkz";
+
+let dataToSend = null;
+
+async function guardarResultado(){
+  if(!dataToSend) return;
+  
+  const statusEl = document.getElementById('saveStatus');
+  if(statusEl) statusEl.textContent = 'Guardando...';
+  
+  try {
+    const response = await fetch(FORMSPREE_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(dataToSend)
+    });
+    
+    if(response.ok) {
+      if(statusEl) statusEl.textContent = '✅ Guardado correctamente en el sistema';
+      if(statusEl) statusEl.style.color = '#22c55e';
+    } else {
+      if(statusEl) statusEl.textContent = '❌ Error al guardar (intenta de nuevo)';
+      if(statusEl) statusEl.style.color = '#ef4444';
+    }
+  } catch(error) {
+    if(statusEl) statusEl.textContent = '❌ No se pudo guardar (revisa tu conexión)';
+    if(statusEl) statusEl.style.color = '#ef4444';
+    console.error('Error:', error);
   }
 }
 
