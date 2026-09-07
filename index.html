@@ -94,15 +94,9 @@
     </div>
     <div class="recbox" id="recBox"></div>
     <div class="btn-row">
-      <button class="btn-primary" style="width:100%" onclick="descargarCSV()">Descargar resultado como CSV</button>
+      <button class="btn-primary" style="width:100%" onclick="guardarResultado()">Guardar resultado en el sistema</button>
     </div>
-    <p style="text-align:center;color:var(--gray);font-size:.85rem;margin-top:8px;">Haz clic para descargar o copia el texto de abajo</p>
-    
-    <div style="background:#f5f5f5;padding:12px;border-radius:6px;margin-top:16px;">
-      <p style="color:var(--gray);font-size:.8rem;margin:0 0 8px 0;">📋 Tus datos (copiar en el Google Sheet):</p>
-      <textarea id="csvData" readonly style="width:100%;height:120px;font-size:.8rem;font-family:monospace;padding:8px;border:1px solid #ddd;border-radius:4px;"></textarea>
-      <button onclick="copiarAlPortapapeles()" style="margin-top:8px;padding:8px 16px;background:#0066cc;color:white;border:none;border-radius:4px;cursor:pointer;font-size:.85rem;">Copiar al portapapeles</button>
-    </div>
+    <p id="saveStatus" style="text-align:center;color:var(--gray);font-size:.85rem;margin-top:8px;">Se abrirá el formulario para guardar...</p>
     <div class="btn-row">
       <button class="btn-secondary" style="width:100%" onclick="window.print()">Imprimir / Guardar resultado</button>
     </div>
@@ -248,57 +242,54 @@ function finishQuiz(){
     return val.includes(",") ? '"' + val + '"' : val;
   }).join(",");
   
-  document.getElementById('csvData').value = csv;
-}
+  abrirFormularioPrellenado({
+    Nombre: datosExamen.Nombre,
+    Cedula: datosExamen.Cedula,
+    Correo: datosExamen.Correo,
+    Fecha: datosExamen.Fecha,
+    Hora: datosExamen.Hora,
+    Puntaje: datosExamen.Puntaje,
+    Porcentaje: datosExamen.Porcentaje,
+    Preguntas_Buenas: datosExamen.Preguntas_Buenas,
+    Preguntas_Malas: datosExamen.Preguntas_Malas,
+    Recomendacion: datosExamen.Recomendacion,
+    P1: datosExamen.P1, P2: datosExamen.P2, P3: datosExamen.P3, P4: datosExamen.P4, P5: datosExamen.P5,
+    P6: datosExamen.P6, P7: datosExamen.P7, P8: datosExamen.P8, P9: datosExamen.P9, P10: datosExamen.P10,
+    P11: datosExamen.P11, P12: datosExamen.P12, P13: datosExamen.P13, P14: datosExamen.P14, P15: datosExamen.P15,
+    P16: datosExamen.P16, P17: datosExamen.P17, P18: datosExamen.P18, P19: datosExamen.P19, P20: datosExamen.P20
+  });
+}}
+
+function guardarResultado(){{
+  // Ya se abrió el form en finishQuiz
+}}
 
 
-let datosExamen = null;
+const FORM_URL = "https://docs.google.com/forms/d/e/1FAIpQLSfuK_4s0WUkwzz_fM7-nv1Aj-WAyJmybf1cWqvAOKUR-PYq5A/viewform";
+const ENTRY_IDS = {'Nombre': '551624568', 'Cedula': '1579139034', 'Correo': '1453784475', 'Fecha': '1668362133', 'Hora': '1404984365', 'Puntaje': '267183830', 'Porcentaje': '741245199', 'Preguntas_Buenas': '128255548', 'Preguntas_Malas': '1989407171', 'Recomendacion': '30650194', 'P1': '409003720', 'P2': '1070221309', 'P3': '718146349', 'P4': '1917448372', 'P5': '1590847456', 'P6': '1863758983', 'P7': '1746762272', 'P8': '934235973', 'P9': '595690501', 'P10': '1082219796', 'P11': '812004237', 'P12': '236108679', 'P13': '1572096319', 'P14': '1395856165', 'P15': '1269766748', 'P16': '1873294745', 'P17': '478904272', 'P18': '1614892588', 'P19': '1022281237', 'P20': '1627970733'};
 
-function descargarCSV(){
-  if(!datosExamen) return;
+function abrirFormularioPrellenado(datos){
+  const params = new URLSearchParams();
   
-  const encabezados = [
-    "Nombre", "Cedula", "Correo", "Fecha", "Hora", 
-    "Puntaje", "Porcentaje", "Preguntas_Buenas", "Preguntas_Malas", "Recomendacion",
-    "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8", "P9", "P10",
-    "P11", "P12", "P13", "P14", "P15", "P16", "P17", "P18", "P19", "P20"
-  ];
-  
-  const fila = [
-    datosExamen.Nombre,
-    datosExamen.Cedula,
-    datosExamen.Correo,
-    datosExamen.Fecha,
-    datosExamen.Hora,
-    datosExamen.Puntaje,
-    datosExamen.Porcentaje,
-    datosExamen.Preguntas_Buenas,
-    datosExamen.Preguntas_Malas,
-    datosExamen.Recomendacion
-  ];
+  // Prellenar campos
+  params.set("entry." + ENTRY_IDS.Nombre, datos.Nombre);
+  params.set("entry." + ENTRY_IDS.Cedula, datos.Cedula);
+  params.set("entry." + ENTRY_IDS.Correo, datos.Correo);
+  params.set("entry." + ENTRY_IDS.Fecha, datos.Fecha);
+  params.set("entry." + ENTRY_IDS.Hora, datos.Hora);
+  params.set("entry." + ENTRY_IDS.Puntaje, datos.Puntaje);
+  params.set("entry." + ENTRY_IDS.Porcentaje, datos.Porcentaje);
+  params.set("entry." + ENTRY_IDS.Preguntas_Buenas, datos.Preguntas_Buenas);
+  params.set("entry." + ENTRY_IDS.Preguntas_Malas, datos.Preguntas_Malas);
+  params.set("entry." + ENTRY_IDS.Recomendacion, datos.Recomendacion);
   
   for(let i = 1; i <= 20; i++){
-    fila.push(datosExamen["P"+i] || "");
+    const key = "P" + i;
+    params.set("entry." + ENTRY_IDS[key], datos[key] || "");
   }
   
-  let csv = encabezados.join(",") + "\n";
-  csv += fila.map(v => {
-    const val = String(v).replace(/"/g, '""');
-    return val.includes(",") ? '"' + val + '"' : val;
-  }).join(",");
-  
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "Evaluacion_" + datosExamen.Cedula + ".csv";
-  link.click();
-}
-
-function copiarAlPortapapeles(){
-  const textarea = document.getElementById('csvData');
-  textarea.select();
-  document.execCommand('copy');
-  alert('✅ Copiado al portapapeles');
+  const formUrl = FORM_URL + "?" + params.toString();
+  window.open(formUrl, "_blank");
 }
 
 </script>
