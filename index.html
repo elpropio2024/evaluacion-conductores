@@ -240,30 +240,44 @@ function saveToGoogle(){
   const buenas = [], malas = [];
   answers.forEach((a, i) => { if(a === QUESTIONS[i].correct) buenas.push(i+1); else malas.push(i+1); });
   
-  // Construir URL manualmente para garantizar que funciona
-  let url = GOOGLE_FORM + "?usp=pp_url";
+  // Crear formulario HTML oculto que se envía a Formspree
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = "https://formspree.io/f/xkjnqpkz";
+  form.style.display = "none";
   
-  url += "&entry.551624568=" + encodeURIComponent(driverInfo.nombre);
-  url += "&entry.1579139034=" + encodeURIComponent(driverInfo.cedula);
-  url += "&entry.1453784475=" + encodeURIComponent(driverInfo.correo);
-  url += "&entry.1668362133=" + encodeURIComponent(driverInfo.fecha);
-  url += "&entry.1404984365=" + encodeURIComponent(new Date().toLocaleTimeString());
-  url += "&entry.267183830=" + encodeURIComponent(data.buenas + "/20");
-  url += "&entry.741245199=" + encodeURIComponent(data.pct + "%");
-  url += "&entry.128255548=" + encodeURIComponent(buenas.join(", "));
-  url += "&entry.1989407171=" + encodeURIComponent(malas.join(", "));
-  url += "&entry.30650194=" + encodeURIComponent(data.rec);
+  const fields = {
+    "Nombre": driverInfo.nombre,
+    "Cedula": driverInfo.cedula,
+    "Correo": driverInfo.correo,
+    "Fecha": driverInfo.fecha,
+    "Hora": new Date().toLocaleTimeString(),
+    "Puntaje": data.buenas + "/20",
+    "Porcentaje": data.pct + "%",
+    "Preguntas_Buenas": buenas.join(", "),
+    "Preguntas_Malas": malas.join(", "),
+    "Recomendacion": data.rec
+  };
   
-  // Agregar respuestas P1-P20
-  const p_entries = [409003720, 1070221309, 718146349, 1917448372, 1590847456, 1863758983, 1746762272, 934235973, 595690501, 1082219796, 812004237, 236108679, 1572096319, 1395856165, 1269766748, 1873294745, 478904272, 1614892588, 1022281237, 1627970733];
-  
+  // Agregar P1-P20
   answers.forEach((ans, i) => {
     const respuesta = ans !== null ? QUESTIONS[i].opts[ans] : "";
-    url += "&entry." + p_entries[i] + "=" + encodeURIComponent(respuesta);
+    fields["P" + (i+1)] = respuesta;
   });
   
-  window.open(url, "_blank");
-  alert("✅ Se abrió el formulario prellenado. Solo haz clic en 'Enviar' para guardar.");
+  // Crear inputs ocultos
+  Object.keys(fields).forEach(key => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = fields[key];
+    form.appendChild(input);
+  });
+  
+  document.body.appendChild(form);
+  form.submit();
+  
+  alert("✅ Resultado guardado en el sistema automáticamente.");
 }
 </script>
 
