@@ -240,45 +240,56 @@ function saveToGoogle(){
   const buenas = [], malas = [];
   answers.forEach((a, i) => { if(a === QUESTIONS[i].correct) buenas.push(i+1); else malas.push(i+1); });
   
-  const params = new URLSearchParams();
-  params.set("entry." + ENTRIES.Nombre, driverInfo.nombre);
-  params.set("entry." + ENTRIES.Cedula, driverInfo.cedula);
-  params.set("entry." + ENTRIES.Correo, driverInfo.correo);
-  params.set("entry." + ENTRIES.Fecha, driverInfo.fecha);
-  params.set("entry." + ENTRIES.Hora, new Date().toLocaleTimeString());
-  params.set("entry." + ENTRIES.Puntaje, data.buenas + "/20");
-  params.set("entry." + ENTRIES.Porcentaje, data.pct + "%");
-  params.set("entry." + ENTRIES.Preguntas_Buenas, buenas.join(", "));
-  params.set("entry." + ENTRIES.Preguntas_Malas, malas.join(", "));
-  params.set("entry." + ENTRIES.Recomendacion, data.rec);
+  // Crear formulario HTML oculto
+  const formElement = document.createElement("form");
+  formElement.method = "POST";
+  formElement.action = GOOGLE_FORM.replace("/viewform", "/formResponse");
+  formElement.style.display = "none";
+  formElement.target = "hiddenFrame";
   
-  Object.keys(ENTRIES).slice(10).forEach((key, i) => {
-    const respuesta = answers[i] !== null ? QUESTIONS[i].opts[answers[i]] : "";
-    params.set("entry." + ENTRIES[key], respuesta);
+  const fields = [
+    ["entry.551624568", driverInfo.nombre],
+    ["entry.1579139034", driverInfo.cedula],
+    ["entry.1453784475", driverInfo.correo],
+    ["entry.1668362133", driverInfo.fecha],
+    ["entry.1404984365", new Date().toLocaleTimeString()],
+    ["entry.267183830", data.buenas + "/20"],
+    ["entry.741245199", data.pct + "%"],
+    ["entry.128255548", buenas.join(", ")],
+    ["entry.1989407171", malas.join(", ")],
+    ["entry.30650194", data.rec]
+  ];
+  
+  // Agregar respuestas P1-P20
+  const p_entries = [409003720, 1070221309, 718146349, 1917448372, 1590847456, 1863758983, 1746762272, 934235973, 595690501, 1082219796, 812004237, 236108679, 1572096319, 1395856165, 1269766748, 1873294745, 478904272, 1614892588, 1022281237, 1627970733];
+  
+  answers.forEach((ans, i) => {
+    const respuesta = ans !== null ? QUESTIONS[i].opts[ans] : "";
+    fields.push(["entry." + p_entries[i], respuesta]);
   });
   
-  const formUrl = GOOGLE_FORM + "?" + params.toString();
-  
-  // Crear un formulario oculto y enviarlo automáticamente
-  const form = document.createElement("form");
-  form.method = "POST";
-  form.action = formUrl.split("?")[0];
-  form.style.display = "none";
-  
-  // Agregar parámetros como campos del formulario
-  params.forEach((value, key) => {
+  fields.forEach(([name, value]) => {
     const input = document.createElement("input");
     input.type = "hidden";
-    input.name = key;
+    input.name = name;
     input.value = value;
-    form.appendChild(input);
+    formElement.appendChild(input);
   });
   
-  document.body.appendChild(form);
-  form.submit();
-  document.body.removeChild(form);
+  // Crear iframe oculto
+  if(!document.getElementById("hiddenFrame")){
+    const frame = document.createElement("iframe");
+    frame.id = "hiddenFrame";
+    frame.name = "hiddenFrame";
+    frame.style.display = "none";
+    document.body.appendChild(frame);
+  }
   
-  alert("✅ Resultado guardado en el sistema.");
+  document.body.appendChild(formElement);
+  formElement.submit();
+  document.body.removeChild(formElement);
+  
+  alert("✅ Resultado guardado en el sistema. Puedes cerrar esta ventana.");
 }
 </script>
 
