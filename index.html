@@ -222,6 +222,7 @@ function nextQuestion(){
 
 function showResults(){
   const buenas = answers.filter((a, i) => a === QUESTIONS[i].correct).length;
+  const malas = 20 - buenas;
   const pct = Math.round(buenas / QUESTIONS.length * 100);
   const rec = pct >= 70 ? "Apto. Puede manejar el vehículo." : "No aprobado. Requiere capacitación adicional.";
   
@@ -232,7 +233,18 @@ function showResults(){
   document.getElementById("userInfo").innerHTML = `${driverInfo.nombre} · CC ${driverInfo.cedula} · ${driverInfo.fecha}`;
   document.getElementById("recDisplay").innerHTML = `<strong>Recomendación:</strong> ${rec}`;
   
-  window.resultData = {buenas, pct, rec, answers};
+  // Guardar TODOS los datos necesarios
+  window.resultData = {
+    buenas: buenas,
+    malas: malas,
+    pct: pct,
+    rec: rec,
+    answers: answers,
+    nombre: driverInfo.nombre,
+    cedula: driverInfo.cedula,
+    correo: driverInfo.correo,
+    fecha: driverInfo.fecha
+  };
 }
 
 function saveToGoogle(){
