@@ -240,56 +240,31 @@ function saveToGoogle(){
   const buenas = [], malas = [];
   answers.forEach((a, i) => { if(a === QUESTIONS[i].correct) buenas.push(i+1); else malas.push(i+1); });
   
-  // Crear formulario HTML oculto
-  const formElement = document.createElement("form");
-  formElement.method = "POST";
-  formElement.action = GOOGLE_FORM.replace("/viewform", "/formResponse");
-  formElement.style.display = "none";
-  formElement.target = "hiddenFrame";
-  
-  const fields = [
-    ["entry.551624568", driverInfo.nombre],
-    ["entry.1579139034", driverInfo.cedula],
-    ["entry.1453784475", driverInfo.correo],
-    ["entry.1668362133", driverInfo.fecha],
-    ["entry.1404984365", new Date().toLocaleTimeString()],
-    ["entry.267183830", data.buenas + "/20"],
-    ["entry.741245199", data.pct + "%"],
-    ["entry.128255548", buenas.join(", ")],
-    ["entry.1989407171", malas.join(", ")],
-    ["entry.30650194", data.rec]
-  ];
+  // Construir URL con parámetros prellenados
+  const params = new URLSearchParams();
+  params.set("entry.551624568", driverInfo.nombre);
+  params.set("entry.1579139034", driverInfo.cedula);
+  params.set("entry.1453784475", driverInfo.correo);
+  params.set("entry.1668362133", driverInfo.fecha);
+  params.set("entry.1404984365", new Date().toLocaleTimeString());
+  params.set("entry.267183830", data.buenas + "/20");
+  params.set("entry.741245199", data.pct + "%");
+  params.set("entry.128255548", buenas.join(", "));
+  params.set("entry.1989407171", malas.join(", "));
+  params.set("entry.30650194", data.rec);
   
   // Agregar respuestas P1-P20
   const p_entries = [409003720, 1070221309, 718146349, 1917448372, 1590847456, 1863758983, 1746762272, 934235973, 595690501, 1082219796, 812004237, 236108679, 1572096319, 1395856165, 1269766748, 1873294745, 478904272, 1614892588, 1022281237, 1627970733];
   
   answers.forEach((ans, i) => {
     const respuesta = ans !== null ? QUESTIONS[i].opts[ans] : "";
-    fields.push(["entry." + p_entries[i], respuesta]);
+    params.set("entry." + p_entries[i], respuesta);
   });
   
-  fields.forEach(([name, value]) => {
-    const input = document.createElement("input");
-    input.type = "hidden";
-    input.name = name;
-    input.value = value;
-    formElement.appendChild(input);
-  });
+  const formUrl = GOOGLE_FORM + "?" + params.toString();
+  window.open(formUrl, "_blank");
   
-  // Crear iframe oculto
-  if(!document.getElementById("hiddenFrame")){
-    const frame = document.createElement("iframe");
-    frame.id = "hiddenFrame";
-    frame.name = "hiddenFrame";
-    frame.style.display = "none";
-    document.body.appendChild(frame);
-  }
-  
-  document.body.appendChild(formElement);
-  formElement.submit();
-  document.body.removeChild(formElement);
-  
-  alert("✅ Resultado guardado en el sistema. Puedes cerrar esta ventana.");
+  alert("✅ Se abrió el formulario prellenado. Solo haz clic en 'Enviar' para guardar.");
 }
 </script>
 
