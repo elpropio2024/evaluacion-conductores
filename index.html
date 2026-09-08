@@ -206,8 +206,12 @@ function showQuestion(){
 
 function nextQuestion(){
   const selected = document.querySelector("input[name='q']:checked");
-  if(selected) answers[current] = parseInt(selected.value);
+  if(!selected) {
+    alert("Debe responder la pregunta antes de continuar.");
+    return;
+  }
   
+  answers[current] = parseInt(selected.value);
   current++;
   if(current < QUESTIONS.length) {
     showQuestion();
@@ -253,7 +257,28 @@ function saveToGoogle(){
     params.set("entry." + ENTRIES[key], respuesta);
   });
   
-  window.open(GOOGLE_FORM + "?" + params.toString(), "_blank");
+  const formUrl = GOOGLE_FORM + "?" + params.toString();
+  
+  // Crear un formulario oculto y enviarlo automáticamente
+  const form = document.createElement("form");
+  form.method = "POST";
+  form.action = formUrl.split("?")[0];
+  form.style.display = "none";
+  
+  // Agregar parámetros como campos del formulario
+  params.forEach((value, key) => {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = key;
+    input.value = value;
+    form.appendChild(input);
+  });
+  
+  document.body.appendChild(form);
+  form.submit();
+  document.body.removeChild(form);
+  
+  alert("✅ Resultado guardado en el sistema.");
 }
 </script>
 
