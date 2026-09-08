@@ -135,8 +135,9 @@ input:focus { outline: none; border-color: #ff6b35; }
     <div id="percentDisplay">0%</div>
     <div id="userInfo"></div>
     <div class="recommendation" id="recDisplay"></div>
-    <button class="btn" onclick="saveToGoogle()" style="margin-top:20px;">Guardar resultado en el sistema</button>
-    <button onclick="location.reload()" class="btn" style="background:#999; margin-top:10px;">Volver a empezar</button>
+    <p style="text-align:center; color:#666; font-size:14px; margin-top:20px;">Guardando resultado...</p>
+    <p id="successMessage" style="display:none; text-align:center; color:#22c55e; font-weight:bold; margin-top:20px;">✅ Resultado guardado exitosamente en el sistema</p>
+    <button id="retryBtn" onclick="location.reload()" class="btn" style="background:#999; margin-top:10px; display:none;">Realizar otra evaluación</button>
   </div>
 
   <div class="footer">
@@ -245,6 +246,11 @@ function showResults(){
     correo: driverInfo.correo,
     fecha: driverInfo.fecha
   };
+  
+  // GUARDAR AUTOMÁTICAMENTE sin que el usuario haga clic
+  setTimeout(() => {
+    saveToGoogle();
+  }, 500);
 }
 
 function saveToGoogle(){
@@ -289,7 +295,11 @@ function saveToGoogle(){
   document.body.appendChild(form);
   form.submit();
   
-  alert("✅ Resultado guardado en el sistema automáticamente.");
+  // Mostrar mensaje de éxito y habilitar botón de repetir
+  setTimeout(() => {
+    document.getElementById("successMessage").style.display = "block";
+    document.getElementById("retryBtn").style.display = "block";
+  }, 1500);
 }
 </script>
 
