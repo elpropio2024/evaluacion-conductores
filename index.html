@@ -240,30 +240,29 @@ function saveToGoogle(){
   const buenas = [], malas = [];
   answers.forEach((a, i) => { if(a === QUESTIONS[i].correct) buenas.push(i+1); else malas.push(i+1); });
   
-  // Construir URL con parámetros prellenados
-  const params = new URLSearchParams();
-  params.set("entry.551624568", driverInfo.nombre);
-  params.set("entry.1579139034", driverInfo.cedula);
-  params.set("entry.1453784475", driverInfo.correo);
-  params.set("entry.1668362133", driverInfo.fecha);
-  params.set("entry.1404984365", new Date().toLocaleTimeString());
-  params.set("entry.267183830", data.buenas + "/20");
-  params.set("entry.741245199", data.pct + "%");
-  params.set("entry.128255548", buenas.join(", "));
-  params.set("entry.1989407171", malas.join(", "));
-  params.set("entry.30650194", data.rec);
+  // Construir URL manualmente para garantizar que funciona
+  let url = GOOGLE_FORM + "?usp=pp_url";
+  
+  url += "&entry.551624568=" + encodeURIComponent(driverInfo.nombre);
+  url += "&entry.1579139034=" + encodeURIComponent(driverInfo.cedula);
+  url += "&entry.1453784475=" + encodeURIComponent(driverInfo.correo);
+  url += "&entry.1668362133=" + encodeURIComponent(driverInfo.fecha);
+  url += "&entry.1404984365=" + encodeURIComponent(new Date().toLocaleTimeString());
+  url += "&entry.267183830=" + encodeURIComponent(data.buenas + "/20");
+  url += "&entry.741245199=" + encodeURIComponent(data.pct + "%");
+  url += "&entry.128255548=" + encodeURIComponent(buenas.join(", "));
+  url += "&entry.1989407171=" + encodeURIComponent(malas.join(", "));
+  url += "&entry.30650194=" + encodeURIComponent(data.rec);
   
   // Agregar respuestas P1-P20
   const p_entries = [409003720, 1070221309, 718146349, 1917448372, 1590847456, 1863758983, 1746762272, 934235973, 595690501, 1082219796, 812004237, 236108679, 1572096319, 1395856165, 1269766748, 1873294745, 478904272, 1614892588, 1022281237, 1627970733];
   
   answers.forEach((ans, i) => {
     const respuesta = ans !== null ? QUESTIONS[i].opts[ans] : "";
-    params.set("entry." + p_entries[i], respuesta);
+    url += "&entry." + p_entries[i] + "=" + encodeURIComponent(respuesta);
   });
   
-  const formUrl = GOOGLE_FORM + "?" + params.toString();
-  window.open(formUrl, "_blank");
-  
+  window.open(url, "_blank");
   alert("✅ Se abrió el formulario prellenado. Solo haz clic en 'Enviar' para guardar.");
 }
 </script>
